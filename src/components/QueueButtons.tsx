@@ -8,7 +8,7 @@ export default function QueueButtons() {
 
   const handleQueueSelection = (serviceName: string, serviceType: "A" | "B") => {
     const params = new URLSearchParams({ serviceName, serviceType });
-    router.push(`/register?${params.toString()}`);
+    router.push(`/ticket?${params.toString()}`);
   };
 
   return (
@@ -32,3 +32,4 @@ export default function QueueButtons() {
     </div>
   );
 }
+
