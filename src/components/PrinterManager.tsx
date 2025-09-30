@@ -68,29 +68,30 @@ export default function PrinterManager({ children }: { children: ReactNode }) {
       await selectedDevice.open();
 
       let endpointNumber: number | null = null;
+      
+      if (selectedDevice.configuration === null) {
+        await selectedDevice.selectConfiguration(1);
+      }
 
-      // Find the correct interface and endpoint
-      for (const config of selectedDevice.configurations) {
-        for (const iface of config.interfaces) {
-          for (const alt of iface.alternates) {
-            if (alt.interfaceClass === 7) { // 7 is the class code for printers
-              for (const endpoint of alt.endpoints) {
-                if (endpoint.direction === "out") {
-                   await selectedDevice.claimInterface(iface.interfaceNumber);
-                   endpointNumber = endpoint.endpointNumber;
-                   break;
-                }
+      for (const iface of selectedDevice.configuration.interfaces) {
+        if (iface.alternate.interfaceClass === 7) { // 7 is the class code for printers
+          try {
+            await selectedDevice.claimInterface(iface.interfaceNumber);
+            for (const endpoint of iface.alternate.endpoints) {
+              if (endpoint.direction === "out") {
+                 endpointNumber = endpoint.endpointNumber;
+                 break;
               }
             }
-            if(endpointNumber) break;
+          } catch(e: any) {
+             throw new Error("Gagal mengklaim interface printer. Pastikan tidak ada program lain yang menggunakan printer ini. Di Windows, Anda mungkin perlu mengganti driver printer ke 'libusb-win32' menggunakan aplikasi Zadig.");
           }
-          if(endpointNumber) break;
         }
         if(endpointNumber) break;
       }
       
       if (!endpointNumber) {
-        throw new Error("Endpoint printer tidak ditemukan. Pastikan driver ter-release. Anda bisa menggunakan Zadig untuk mengganti driver ke libusb-win32.");
+        throw new Error("Endpoint printer tidak ditemukan. Coba ganti driver printer ke 'libusb-win32' menggunakan aplikasi Zadig jika Anda menggunakan Windows.");
       }
       
       // Store endpoint number in a custom property
@@ -171,6 +172,12 @@ export default function PrinterManager({ children }: { children: ReactNode }) {
         ESC_POS.LINE_FEED,
         ESC_POS.LINE_FEED,
         ESC_POS.LINE_FEED,
+        ESC_POS.LINE_FEED,
+        ESC_POS.LINE_FEED,
+        ESC_POS.LINE_FEED,
+        ESC_POS.LINE_FEED,
+        ESC_POS.LINE_FEED,
+        ESC_POS.LINE_FEED,
         ESC_POS.CUT,
       ];
 
@@ -237,3 +244,4 @@ export default function PrinterManager({ children }: { children: ReactNode }) {
     </PrinterContext.Provider>
   );
 }
+
